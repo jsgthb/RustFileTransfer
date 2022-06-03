@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, net::TcpListener};
 
 struct File {
     name: String,
@@ -7,6 +7,9 @@ struct File {
 }
 
 fn main() {
+    // 0.0.0.0 address for external network accessibility
+    let address = "127.0.0.1";
+    let port = 35000;
     let mut file_array: Vec<File> = Vec::new();
     let mut counter = 0;
     println!("Checking files on server (/files/server)...");
@@ -16,7 +19,7 @@ fn main() {
         let file_name = file.as_ref().unwrap().file_name().into_string().unwrap();
         let file_path = file.as_ref().unwrap().path().display().to_string();
         let file_length = file.unwrap().metadata().unwrap().len();
-        file_array.push(File { name: file_name.clone(), path: file_path.clone(), size: file_length.clone() });
+        file_array.push(File { name: file_name.clone(), path: file_path, size: file_length.clone() });
         // Display file data
         println!("{}: '{}' {}", counter, file_name, pretty_print_filesize(file_length));
         counter += 1;
@@ -25,6 +28,22 @@ fn main() {
     if counter == 0 {
         println!("No files found, shutting down");
         return;
+    }
+    // Start server
+    let listener = TcpListener::bind(format!("{}:{}", address, port)).unwrap();
+    println!("Server started on {}:{}", address, port);
+    println!("Waiting for client...");
+    for stream in listener.incoming() {
+        match stream {
+            // On successful connection
+            Ok(stream) => {
+                println!("Client connected: {}", stream.peer_addr().unwrap());
+            }
+            // On connection error
+            Err(e) => {
+                println!("Connection error: {}", e);
+            }
+        }
     }
 }
 

@@ -1,4 +1,7 @@
-use std::{fs, net::TcpListener};
+use std::fs::DirEntry;
+use std::{fs};
+use std::net::{TcpListener, TcpStream, Shutdown};
+use std::io::{Read, Write};
 
 struct File {
     name: String,
@@ -6,10 +9,7 @@ struct File {
     size: u64
 }
 
-pub fn start() {
-    // 0.0.0.0 address for external network accessibility
-    let address = "127.0.0.1";
-    let port = 35000;
+pub fn start(address: &str, port: i32) {
     let mut file_array: Vec<File> = Vec::new();
     let mut counter = 0;
     println!("Checking files on server (/files/server)...");
@@ -37,7 +37,7 @@ pub fn start() {
         match stream {
             // On successful connection
             Ok(stream) => {
-                println!("Client connected: {}", stream.peer_addr().unwrap());
+                handle_client(stream)
             }
             // On connection error
             Err(e) => {
@@ -57,4 +57,22 @@ fn pretty_print_filesize(length: u64) -> String {
         let output_length: f64 = length as f64 / 1024 as f64 / 1024 as f64;
         return format!("{:.2} MB", output_length);
     }
+}
+
+fn handle_client(mut stream: TcpStream) {
+    println!("Client connected: {}", stream.peer_addr().unwrap());
+    // 50 byte buffer
+    let mut data = [0 as u8; 50];
+    while match stream.read(&mut data) {
+        Ok(size) => {
+            // echo everything!
+            stream.write(&data[0..size]).unwrap();
+            true
+        },
+        Err(_) => {
+            println!("An error occurred, terminating connection with {}", stream.peer_addr().unwrap());
+            stream.shutdown(Shutdown::Both).unwrap();
+            false
+        }
+    } {}
 }

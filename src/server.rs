@@ -21,4 +21,9 @@ fn main() {
         println!("{}: {} {}", counter, fileName, fileLength);
         counter += 1;
     }
+    // End process if no files are located in server folder
+    if counter == 0 {
+        println!("No files found, shutting down");
+        return;
+    }
 }

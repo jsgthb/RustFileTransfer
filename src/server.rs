@@ -6,7 +6,7 @@ struct File {
     size: u64
 }
 
-fn main() {
+pub fn start() {
     // 0.0.0.0 address for external network accessibility
     let address = "127.0.0.1";
     let port = 35000;

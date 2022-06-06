@@ -1,30 +1,24 @@
 use std::net::{TcpStream};
-use std::io::{Read, Write};
-use std::str::from_utf8;
+use std::io;
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct File {
+    name: String,
+    path: String,
+    size: u64
+}
 
 pub fn start(address: &str, port: i32) {
     match TcpStream::connect(format!("{}:{}", address, port)) {
         Ok(mut stream) => {
-            println!("Successfully connected to server in port 3333");
-
-            let msg = b"Hello!";
-
-            stream.write(msg).unwrap();
-            println!("Sent Hello, awaiting reply...");
-
-            let mut data = [0 as u8; 6]; // using 6 byte buffer
-            match stream.read_exact(&mut data) {
-                Ok(_) => {
-                    if &data == msg {
-                        println!("Reply is ok!");
-                    } else {
-                        let text = from_utf8(&data).unwrap();
-                        println!("Unexpected reply: {}", text);
-                    }
-                },
-                Err(e) => {
-                    println!("Failed to receive data: {}", e);
-                }
+            println!("Successfully connected to server on port {}", port);
+            let mut reader = io::BufReader::new(&mut stream);
+            // Read current current data in the TcpStream
+            let file_array: Vec<File> = serde_cbor::from_reader(reader).unwrap();
+            println!("Select a file to download:");
+            for (i, file) in file_array.iter().enumerate() {
+                println!("{}: '{}' {}", i, file.name, pretty_print_filesize(file.size));
             }
         },
         Err(e) => {
@@ -32,4 +26,16 @@ pub fn start(address: &str, port: i32) {
         }
     }
     println!("Terminated.");
+}
+
+fn pretty_print_filesize(length: u64) -> String {
+    if length < 1024 {
+        return format!("{} Bytes", length);
+    } else if length >= 1024 && length < 1024 * 1024 {
+        let output_length: f64 = length as f64 / 1024 as f64;
+        return format!("{} kB", output_length);
+    } else {
+        let output_length: f64 = length as f64 / 1024 as f64 / 1024 as f64;
+        return format!("{:.2} MB", output_length);
+    }
 }

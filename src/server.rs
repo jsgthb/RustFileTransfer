@@ -1,8 +1,8 @@
-use std::fs::DirEntry;
 use std::{fs};
 use std::net::{TcpListener, TcpStream, Shutdown};
-use std::io::{Read, Write};
+use serde_derive::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize)]
 struct File {
     name: String,
     path: String,
@@ -37,7 +37,7 @@ pub fn start(address: &str, port: i32) {
         match stream {
             // On successful connection
             Ok(stream) => {
-                handle_client(stream)
+                handle_client(stream, &file_array);
             }
             // On connection error
             Err(e) => {
@@ -59,20 +59,9 @@ fn pretty_print_filesize(length: u64) -> String {
     }
 }
 
-fn handle_client(mut stream: TcpStream) {
-    println!("Client connected: {}", stream.peer_addr().unwrap());
-    // 50 byte buffer
-    let mut data = [0 as u8; 50];
-    while match stream.read(&mut data) {
-        Ok(size) => {
-            // echo everything!
-            stream.write(&data[0..size]).unwrap();
-            true
-        },
-        Err(_) => {
-            println!("An error occurred, terminating connection with {}", stream.peer_addr().unwrap());
-            stream.shutdown(Shutdown::Both).unwrap();
-            false
-        }
-    } {}
+fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
+    println!("Client connected from {}", stream.local_addr().unwrap());
+    let serialized_array = serde_cbor::to_writer(&stream, &file_array);
+    stream.shutdown(Shutdown::Both).unwrap();
+    println!("Client {} connection closed", stream.local_addr().unwrap());
 }

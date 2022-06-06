@@ -1,13 +1,6 @@
 use std::{fs};
 use std::net::{TcpListener, TcpStream, Shutdown};
-use serde_derive::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-struct File {
-    name: String,
-    path: String,
-    size: u64
-}
+use serde_derive::{Serialize, Deserialize};
 
 pub fn start(address: &str, port: i32) {
     let mut file_array: Vec<File> = Vec::new();
@@ -47,7 +40,21 @@ pub fn start(address: &str, port: i32) {
     }
 }
 
-fn pretty_print_filesize(length: u64) -> String {
+fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
+    println!("Client connected from {}", stream.local_addr().unwrap());
+    let serialized_array = serde_cbor::to_writer(&stream, &file_array);
+    stream.shutdown(Shutdown::Both).unwrap();
+    println!("Client {} connection closed", stream.local_addr().unwrap());
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct File {
+    pub name: String,
+    pub path: String,
+    pub size: u64
+}
+
+pub fn pretty_print_filesize(length: u64) -> String {
     if length < 1024 {
         return format!("{} Bytes", length);
     } else if length >= 1024 && length < 1024 * 1024 {
@@ -57,11 +64,4 @@ fn pretty_print_filesize(length: u64) -> String {
         let output_length: f64 = length as f64 / 1024 as f64 / 1024 as f64;
         return format!("{:.2} MB", output_length);
     }
-}
-
-fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
-    println!("Client connected from {}", stream.local_addr().unwrap());
-    let serialized_array = serde_cbor::to_writer(&stream, &file_array);
-    stream.shutdown(Shutdown::Both).unwrap();
-    println!("Client {} connection closed", stream.local_addr().unwrap());
 }

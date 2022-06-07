@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::{fs};
 use std::net::{TcpListener, TcpStream, Shutdown};
 use serde_derive::{Serialize, Deserialize};
@@ -42,7 +43,8 @@ pub fn start(address: &str, port: i32) {
 
 fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     println!("Client connected from {}", stream.local_addr().unwrap());
-    let serialized_array = serde_cbor::to_writer(&stream, &file_array);
+    let serialized_array = serde_json::to_string(&file_array).unwrap();
+    stream.write_all(serialized_array.as_bytes());
     stream.shutdown(Shutdown::Both).unwrap();
     println!("Client {} connection closed", stream.local_addr().unwrap());
 }

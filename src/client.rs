@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, thread, time};
 use std::net::{TcpStream};
 use std::io::{self, BufRead, Write};
 
@@ -39,7 +39,9 @@ pub fn start(address: &str, port: i32) {
             reader.consume(received_file.len().clone());
             // Write file to disk
             fs::write(format!("./files/client/{}", file_names.get(selection).unwrap()), received_file).unwrap();
-            println!("File successfully downloaded");
+            println!("File successfully downloaded to {} ", (format!("./files/client/{}", file_names.get(selection).unwrap())));
+            println!("Closing window in 10 seconds...");
+            thread::sleep(time::Duration::from_millis(10000));
         },
         Err(e) => {
             println!("Failed to connect: {}", e);

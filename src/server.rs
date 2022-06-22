@@ -55,10 +55,10 @@ fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     reader.consume(received.len());
     let selection = String::from_utf8(received).unwrap().parse::<usize>().unwrap();
     // Open selected file
-    let openedFile = std::fs::read(file_array.get(selection).unwrap().path.clone()).unwrap();
+    let opened_file = std::fs::read(file_array.get(selection).unwrap().path.clone()).unwrap();
     // Send file
     println!("Sending file {} to client {}", file_array.get(selection).unwrap().name.clone(), stream.local_addr().unwrap());
-    stream.write_all(&openedFile).unwrap();
+    stream.write_all(&opened_file).unwrap();
     println!("{} transfer completed", stream.local_addr().unwrap());
     stream.shutdown(Shutdown::Both).unwrap();
     println!("Client {} connection closed", stream.local_addr().unwrap());

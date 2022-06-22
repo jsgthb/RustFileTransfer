@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{Write, self, BufRead};
 use std::{fs};
 use std::net::{TcpListener, TcpStream, Shutdown};
 use serde_derive::{Serialize, Deserialize};
@@ -43,13 +43,19 @@ pub fn start(address: &str, port: i32) {
 
 fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     println!("Client connected from {}", stream.local_addr().unwrap());
+    let mut reader = io::BufReader::new( stream.try_clone().unwrap());
+    // Send list of files to client
     let serialized_array = serde_json::to_string(&file_array).unwrap();
     stream.write_all(serialized_array.as_bytes());
+    // Open selected file as byte vector
+    let received = reader.fill_buf().unwrap().to_vec();
+    reader.consume(received.len());
+    let selected_file = String::from_utf8(received).unwrap();
     stream.shutdown(Shutdown::Both).unwrap();
     println!("Client {} connection closed", stream.local_addr().unwrap());
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct File {
     pub name: String,
     pub path: String,

@@ -13,6 +13,10 @@ pub fn start(address: &str, port: i32) {
         let file_name = file.as_ref().unwrap().file_name().into_string().unwrap();
         let file_path = file.as_ref().unwrap().path().display().to_string();
         let file_length = file.unwrap().metadata().unwrap().len();
+        // Check if filesize is below 10 MB
+        if file_length > 10 * 1024 * 1024 {
+            panic!("The maximum filesize is 10 MB")
+        }
         file_array.push(File { name: file_name.clone(), path: file_path, size: file_length.clone() });
         // Display file data
         println!("{}: '{}' {}", counter, file_name, pretty_print_filesize(file_length));
@@ -20,8 +24,7 @@ pub fn start(address: &str, port: i32) {
     }
     // End process if no files are located in server folder
     if counter == 0 {
-        println!("No files found, shutting down");
-        return;
+        panic!("No files found in files/server folder")
     }
     // Start server
     let listener = TcpListener::bind(format!("{}:{}", address, port)).unwrap();

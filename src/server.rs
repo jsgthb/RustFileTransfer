@@ -47,10 +47,16 @@ fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     // Send list of files to client
     let serialized_array = serde_json::to_string(&file_array).unwrap();
     stream.write_all(serialized_array.as_bytes());
-    // Open selected file as byte vector
+    // Get client selection
     let received = reader.fill_buf().unwrap().to_vec();
     reader.consume(received.len());
-    let selected_file = String::from_utf8(received).unwrap();
+    let selection = String::from_utf8(received).unwrap().parse::<usize>().unwrap();
+    // Open selected file
+    let openedFile = std::fs::read(file_array.get(selection).unwrap().path.clone()).unwrap();
+    // Send file
+    println!("Sending file {} to client {}", file_array.get(selection).unwrap().name.clone(), stream.local_addr().unwrap());
+    stream.write_all(&openedFile);
+    println!("{} transfer completed", stream.local_addr().unwrap());
     stream.shutdown(Shutdown::Both).unwrap();
     println!("Client {} connection closed", stream.local_addr().unwrap());
 }
@@ -67,7 +73,7 @@ pub fn pretty_print_filesize(length: u64) -> String {
         return format!("{} Bytes", length);
     } else if length >= 1024 && length < 1024 * 1024 {
         let output_length: f64 = length as f64 / 1024 as f64;
-        return format!("{} kB", output_length);
+        return format!("{:.2} kB", output_length);
     } else {
         let output_length: f64 = length as f64 / 1024 as f64 / 1024 as f64;
         return format!("{:.2} MB", output_length);

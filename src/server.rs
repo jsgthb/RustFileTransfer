@@ -49,7 +49,7 @@ fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     let mut reader = io::BufReader::new( stream.try_clone().unwrap());
     // Send list of files to client
     let serialized_array = serde_json::to_string(&file_array).unwrap();
-    stream.write_all(serialized_array.as_bytes());
+    stream.write_all(serialized_array.as_bytes()).unwrap();
     // Get client selection
     let received = reader.fill_buf().unwrap().to_vec();
     reader.consume(received.len());
@@ -58,7 +58,7 @@ fn handle_client(mut stream: TcpStream, file_array: &Vec<File>) {
     let openedFile = std::fs::read(file_array.get(selection).unwrap().path.clone()).unwrap();
     // Send file
     println!("Sending file {} to client {}", file_array.get(selection).unwrap().name.clone(), stream.local_addr().unwrap());
-    stream.write_all(&openedFile);
+    stream.write_all(&openedFile).unwrap();
     println!("{} transfer completed", stream.local_addr().unwrap());
     stream.shutdown(Shutdown::Both).unwrap();
     println!("Client {} connection closed", stream.local_addr().unwrap());

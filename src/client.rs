@@ -32,7 +32,7 @@ pub fn start(address: &str, port: i32) {
                 .items(&selection_options[..])
                 .interact()
                 .unwrap();
-            stream.write_all(selection.to_string().as_bytes());
+            stream.write_all(selection.to_string().as_bytes()).unwrap();
             // Receive file
             println!("Downloading file... ");
             let received_file = reader.fill_buf().unwrap().to_vec();
